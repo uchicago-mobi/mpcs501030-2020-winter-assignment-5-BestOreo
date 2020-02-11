@@ -31,6 +31,12 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         }
     }
     
+    @IBAction func favoriteBtnTapped(_ sender: Any) {
+        let vc = self.storyboard?.instantiateViewController(withIdentifier: "FavoritesViewController") as! FavoritesViewController
+        vc.delegate = self
+        show(vc, sender: self)
+    }
+    
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         return PlaceMarkerView()
     }
@@ -62,38 +68,57 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        let location = CLLocationCoordinate2D(latitude: 41.8728043, longitude: -87.6334798)
-        let span = MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
-        let region = MKCoordinateRegion(center: location, span: span)
-        mapView.showsCompass = false
-        mapView.pointOfInterestFilter = .excludingAll
-        mapView.setRegion(region, animated: true)
-                
-        let locationInfo = DataManager.sharedInstance.placesDict as! [Dictionary<String, AnyObject>]
-        for location in locationInfo {
+    
+        let locationInfo = DataManager.sharedInstance.placesDict
+        for (index, location) in locationInfo.enumerated() {
             let newPlace = Place()
             newPlace.name = location["name"] as? String
             newPlace.longDescription = location["description"] as? String
             annotationPlaces.append(newPlace)
             let long: Double = location["long"] as! Double
             let lat: Double = location["lat"] as! Double
-            let annotation = MKPointAnnotation()
-            annotation.coordinate = CLLocationCoordinate2D(latitude: lat, longitude: long)
-            annotation.title = newPlace.name
-            annotation.subtitle = newPlace.longDescription
+            let annotation = newAnnotation(lat: lat, long: long, title:  newPlace.name!, subtitle: newPlace.longDescription!)
             mapView.addAnnotation(annotation)
+            if index == 0 {
+                self.mapViewMoveTo(lat: lat, long: long)
+            }
         }
-        
+    }
+    
+    func newAnnotation(lat: Double, long: Double, title: String, subtitle: String) -> MKPointAnnotation{
         let annotation = MKPointAnnotation()
-        annotation.coordinate = location
-        annotation.title = "City of Chicago"
-        annotation.subtitle = "Chicago"
-        mapView.addAnnotation(annotation)
+        annotation.coordinate = CLLocationCoordinate2D(latitude: lat, longitude: long)
+        annotation.title = title
+        annotation.subtitle = subtitle
+        return annotation
+    }
+    
+    func mapViewMoveTo(lat: Double, long: Double) {
+        let location = CLLocationCoordinate2D(latitude: lat, longitude: long)
+        let span = MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
+        let region = MKCoordinateRegion(center: location, span: span)
+        mapView.showsCompass = false
+        mapView.pointOfInterestFilter = .excludingAll
+        mapView.setRegion(region, animated: true)
     }
     
     func getPlist(withName name: String) -> NSArray{
         let dictionary = NSDictionary(contentsOfFile: Bundle.main.path(forResource: name, ofType: "plist")!);
         return dictionary?["places"] as! NSArray
+    }
+}
+
+extension MapViewController: PlacesFavoritesDelegate {
+  
+    func favoritePlace(name: String) {
+        let postion = DataManager.sharedInstance.getLocation(name: name)
+        mapViewMoveTo(lat: postion["lat"]!, long: postion["long"]!)
+        for annotation in mapView.annotations {
+            if annotation.title == name {
+                self.mapView.selectAnnotation(annotation, animated: true)
+                break
+            }
+        }
     }
 }
 
