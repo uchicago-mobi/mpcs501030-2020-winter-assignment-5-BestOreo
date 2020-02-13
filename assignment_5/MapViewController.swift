@@ -13,7 +13,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
 
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var board: UIView!
-    
     @IBOutlet weak var boardTitle: UILabel!
     @IBOutlet weak var boardDescription: UILabel!
     @IBOutlet weak var likeBtn: UIButton!
@@ -65,22 +64,24 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-    
-        let locationInfo = DataManager.sharedInstance.placesDict
-        for (index, location) in locationInfo.enumerated() {
+        var long:Double = 0
+        var lat:Double = 0
+        let placeDescrption = DataManager.sharedInstance.placesDescription
+        let placePosition = DataManager.sharedInstance.placesPosition
+        for locationName in placeDescrption.keys{
             let newPlace = Place()
-            newPlace.name = location["name"] as? String
-            newPlace.longDescription = location["description"] as? String
+            newPlace.name = locationName
+            newPlace.longDescription = placeDescrption[locationName]!
             annotationPlaces.append(newPlace)
-            let long: Double = location["long"] as! Double
-            let lat: Double = location["lat"] as! Double
+            let position = placePosition[locationName]!
+            long = position[0]
+            lat = position[1]
             let annotation = newAnnotation(lat: lat, long: long, title:  newPlace.name!, subtitle: newPlace.longDescription!)
             mapView.addAnnotation(annotation)
-            if index == 0 {
-                self.mapViewMoveTo(lat: lat, long: long)
-            }
         }
+        self.mapViewMoveTo(lat: lat, long: long)
     }
+    
     
     func newAnnotation(lat: Double, long: Double, title: String, subtitle: String) -> MKPointAnnotation{
         let annotation = MKPointAnnotation()

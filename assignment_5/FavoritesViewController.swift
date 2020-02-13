@@ -14,15 +14,12 @@ class FavoritesViewController: UIViewController, UITableViewDelegate, UITableVie
     @IBOutlet weak var tableView: UITableView!
     weak var delegate: PlacesFavoritesDelegate?
 
-    let cellReuseIdentifier = "cell"
-
     @IBAction func dimissTableView(_ sender: UIButton) {
         self.dismiss(animated: true, completion: {})
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellReuseIdentifier)
         tableView.delegate = self
         tableView.dataSource = self
     }
@@ -37,13 +34,14 @@ class FavoritesViewController: UIViewController, UITableViewDelegate, UITableVie
     
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell: UITableViewCell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as UITableViewCell
-        cell.textLabel?.text = DataManager.sharedInstance.listFavorites()[indexPath.row]
+        let cell = tableView.dequeueReusableCell(withIdentifier: "tablecell", for: indexPath) as! FavoriteCell
+        cell.title.text = DataManager.sharedInstance.listFavorites()[indexPath.row][0]
+        cell.subtitle.text = DataManager.sharedInstance.listFavorites()[indexPath.row][1]
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        self.delegate?.favoritePlace(name: DataManager.sharedInstance.listFavorites()[indexPath.row])
+        self.delegate?.favoritePlace(name: DataManager.sharedInstance.listFavorites()[indexPath.row][0])
         self.dismiss(animated: true)
     }
 }

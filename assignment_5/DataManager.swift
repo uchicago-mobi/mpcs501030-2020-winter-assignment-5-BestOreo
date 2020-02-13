@@ -13,6 +13,8 @@ public class DataManager {
     // MARK: - Singleton Stuff
     public static let sharedInstance = DataManager()
     var placesDict: Array = [Dictionary<String, Any>]()
+    var placesDescription: Dictionary<String, String> = [:]
+    var placesPosition: Dictionary<String, [Double]> = [:]
     let favoritesDefaults = UserDefaults.standard
     var favoritesList: [String] = Array()
   
@@ -39,6 +41,8 @@ public class DataManager {
             let long = place["long"] as! Double
             let lat = place["lat"] as! Double
             placesDict.append(["name": name, "description": description, "long": long, "lat": lat])
+            placesDescription[name] = description
+            placesPosition[name] = [long, lat]
         }
     }
       
@@ -57,27 +61,20 @@ public class DataManager {
         favoritesDefaults.setValue(favoritesList, forKey: "FavoritePlaces")
     }
   
-    func listFavorites() -> [String] {
-        return favoritesList
+    func listFavorites() -> [[String]] {
+        var result:[[String]] = Array()
+        for name in favoritesList{
+            result.append([name, placesDescription[name]!])
+        }
+        return result
     }
     
     func isFavorites(name: String) -> Bool{
-        for location in favoritesList {
-            if location == name {
-                return true
-            }
-        }
-        return false
+        return favoritesList.contains(name)
     }
     
     func getLocation(name: String) -> Dictionary<String,Double> {
-        var result = ["long": 360.0, "lat": 360.0]
-        for place in placesDict{
-            if (place["name"] as! String) == name {
-                result["long"] = (place["long"] as! Double)
-                result["lat"] = (place["lat"] as! Double)
-            }
-        }
-        return result
+        let position = placesPosition[name]!
+        return ["long": position[0], "lat": position[1]]
     }
 }
