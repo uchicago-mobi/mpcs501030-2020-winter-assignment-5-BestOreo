@@ -20,8 +20,6 @@ public class DataManager {
     fileprivate init() {
         loadAnnotationFromPlist()
         loadFavoriteFromDefault()
-        print(favoritesDefaults.dictionaryRepresentation().keys)
-        print(favoritesDefaults.dictionaryRepresentation().keys.count)
     }
     
     func loadFavoriteFromDefault() {
@@ -75,7 +73,6 @@ public class DataManager {
     func getLocation(name: String) -> Dictionary<String,Double> {
         var result = ["long": 360.0, "lat": 360.0]
         for place in placesDict{
-            print((place["name"] as! String), name)
             if (place["name"] as! String) == name {
                 result["long"] = (place["long"] as! Double)
                 result["lat"] = (place["lat"] as! Double)

@@ -19,15 +19,14 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     @IBOutlet weak var likeBtn: UIButton!
     
     var annotationPlaces: [Place] = Array()
-    var currentPlace: String = ""
     
     @IBAction func likeBtn(_ sender: UIButton) {
         if sender.isSelected == false {
             sender.isSelected = true
-            DataManager.sharedInstance.saveFavorites(name: currentPlace)
+            DataManager.sharedInstance.saveFavorites(name: boardTitle.text!)
         }else{
             sender.isSelected = false
-            DataManager.sharedInstance.deleteFavorite(name: currentPlace)
+            DataManager.sharedInstance.deleteFavorite(name: boardTitle.text!)
         }
     }
     
@@ -44,8 +43,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         board.isHidden = false
         boardTitle.text = view.annotation!.title as? String
-        currentPlace = boardTitle.text!
-        
         boardTitle.font = UIFont(name: boardTitle.font.fontName, size: 30)
         if boardTitle.text!.count >= 20{
             boardTitle.font = UIFont(name: boardTitle.font.fontName, size: 24)
