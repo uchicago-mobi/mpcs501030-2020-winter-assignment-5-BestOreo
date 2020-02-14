@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MapKit
 
 public class DataManager {
   
@@ -14,7 +15,8 @@ public class DataManager {
     public static let sharedInstance = DataManager()
     var placesDict: Array = [Dictionary<String, Any>]()
     var placesDescription: Dictionary<String, String> = [:]
-    var placesPosition: Dictionary<String, [Double]> = [:]
+    var placesPosition: Dictionary<String, CLLocationCoordinate2D> = [:]
+    
     let favoritesDefaults = UserDefaults.standard
     var favoritesList: [String] = Array()
   
@@ -42,7 +44,7 @@ public class DataManager {
             let lat = place["lat"] as! Double
             placesDict.append(["name": name, "description": description, "long": long, "lat": lat])
             placesDescription[name] = description
-            placesPosition[name] = [long, lat]
+            placesPosition[name] = CLLocationCoordinate2D(latitude: lat, longitude: long)
         }
     }
       
@@ -73,8 +75,11 @@ public class DataManager {
         return favoritesList.contains(name)
     }
     
-    func getLocation(name: String) -> Dictionary<String,Double> {
-        let position = placesPosition[name]!
-        return ["long": position[0], "lat": position[1]]
+    func getLocation(name: String) -> CLLocationCoordinate2D {
+        return placesPosition[name]!
+    }
+    
+    func getDescription(name: String) -> String{
+        return placesDescription[name]!
     }
 }

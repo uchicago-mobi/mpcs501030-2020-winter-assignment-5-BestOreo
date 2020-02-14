@@ -36,6 +36,8 @@
 		8654D25723F0C8C4007024B4 /* FavoritesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesViewController.swift; sourceTree = "<group>"; };
 		8654D25923F0E43C007024B4 /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		866F418223F5013C00F68BD5 /* FavoritesCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesCell.swift; sourceTree = "<group>"; };
+		86A8BA8423F6419A00A995A6 /* gpx_willis_tower.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = gpx_willis_tower.gpx; sourceTree = "<group>"; };
+		86A8BA8523F6426C00A995A6 /* gpx_willis_tower.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = gpx_willis_tower.gpx; path = assignment_5/gpx_willis_tower.gpx; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +54,7 @@
 		8654D23123F0780F007024B4 = {
 			isa = PBXGroup;
 			children = (
+				86A8BA8523F6426C00A995A6 /* gpx_willis_tower.gpx */,
 				8654D23C23F0780F007024B4 /* assignment_5 */,
 				8654D23B23F0780F007024B4 /* Products */,
 			);
@@ -81,6 +84,7 @@
 				8654D24823F07813007024B4 /* LaunchScreen.storyboard */,
 				8654D24B23F07813007024B4 /* Info.plist */,
 				8654D25523F0C590007024B4 /* Data.plist */,
+				86A8BA8423F6419A00A995A6 /* gpx_willis_tower.gpx */,
 			);
 			path = assignment_5;
 			sourceTree = "<group>";

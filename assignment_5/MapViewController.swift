@@ -8,8 +8,9 @@
 
 import UIKit
 import MapKit
+import UserNotifications
 
-class MapViewController: UIViewController, MKMapViewDelegate {
+class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, UNUserNotificationCenterDelegate {
 
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var board: UIView!
@@ -18,6 +19,90 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     @IBOutlet weak var likeBtn: UIButton!
     
     var annotationPlaces: [Place] = Array()
+    let locationManager = CLLocationManager()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.mapView.delegate = self
+        board.isHidden = true
+        boardDescription.numberOfLines = 0
+        
+        // reference: https://stackoverflow.com/questions/25296691/get-users-current-location-coordinates
+        // Ask for Authorisation from the User.
+        self.locationManager.requestAlwaysAuthorization()
+        // For use in foreground
+        self.locationManager.requestWhenInUseAuthorization()
+        if CLLocationManager.locationServicesEnabled() {
+            locationManager.delegate = self
+            locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+            locationManager.startUpdatingLocation()
+        }
+        
+        // Assing self delegate on userNotificationCenter
+        self.userNotificationCenter.delegate = self
+        
+        // Notification center property
+        self.requestNotificationAuthorization()
+    }
+    
+    // Local Notification Reference: https://programmingwithswift.com/how-to-send-local-notification-with-swift-5/
+    let userNotificationCenter = UNUserNotificationCenter.current()
+
+    func requestNotificationAuthorization() {
+        let authOptions = UNAuthorizationOptions.init(arrayLiteral: .alert, .badge, .sound)
+        
+        self.userNotificationCenter.requestAuthorization(options: authOptions) { (success, error) in
+            if let error = error {
+                print("Error: ", error)
+            }
+        }
+    }
+
+    func registerNotification(name: String) {
+        print("registerNotification", name)
+        let notificationContent = UNMutableNotificationContent()
+        notificationContent.title = "Welcome to " + name
+        notificationContent.body = DataManager.sharedInstance.getDescription(name: name)
+        
+        if let url = Bundle.main.url(forResource: "dune", withExtension: "png") {
+            if let attachment = try? UNNotificationAttachment(identifier: "dune", url: url, options: nil) {
+                notificationContent.attachments = [attachment]
+            }
+        }
+    
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.5, repeats: false)
+        let request = UNNotificationRequest(identifier: name, content: notificationContent, trigger: trigger)
+        
+        userNotificationCenter.add(request) { (error) in
+            if let error = error {
+                print("Notification Error: ", error)
+            }
+        }
+    }
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        completionHandler()
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.alert, .badge, .sound])
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        var position = CLLocationCoordinate2D(latitude: 0, longitude: 0)
+        let placeDescrption = DataManager.sharedInstance.placesDescription
+        for locationName in placeDescrption.keys{
+            let newPlace = Place()
+            newPlace.name = locationName
+            newPlace.longDescription = placeDescrption[locationName]!
+            annotationPlaces.append(newPlace)
+            position = DataManager.sharedInstance.getLocation(name: locationName)
+            let annotation = newAnnotation(location: position, title: newPlace.name!, subtitle: newPlace.longDescription!)
+            mapView.addAnnotation(annotation)
+        }
+        self.mapViewMoveTo(location: position)
+    }
+    
     
     @IBAction func likeBtn(_ sender: UIButton) {
         if sender.isSelected == false {
@@ -56,43 +141,15 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         board.isHidden = true
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        self.mapView.delegate = self
-        board.isHidden = true
-        boardDescription.numberOfLines = 0
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        var long:Double = 0
-        var lat:Double = 0
-        let placeDescrption = DataManager.sharedInstance.placesDescription
-        let placePosition = DataManager.sharedInstance.placesPosition
-        for locationName in placeDescrption.keys{
-            let newPlace = Place()
-            newPlace.name = locationName
-            newPlace.longDescription = placeDescrption[locationName]!
-            annotationPlaces.append(newPlace)
-            let position = placePosition[locationName]!
-            long = position[0]
-            lat = position[1]
-            let annotation = newAnnotation(lat: lat, long: long, title:  newPlace.name!, subtitle: newPlace.longDescription!)
-            mapView.addAnnotation(annotation)
-        }
-        self.mapViewMoveTo(lat: lat, long: long)
-    }
-    
-    
-    func newAnnotation(lat: Double, long: Double, title: String, subtitle: String) -> MKPointAnnotation{
+    func newAnnotation(location: CLLocationCoordinate2D, title: String, subtitle: String) -> MKPointAnnotation{
         let annotation = MKPointAnnotation()
-        annotation.coordinate = CLLocationCoordinate2D(latitude: lat, longitude: long)
+        annotation.coordinate = location
         annotation.title = title
         annotation.subtitle = subtitle
         return annotation
     }
     
-    func mapViewMoveTo(lat: Double, long: Double) {
-        let location = CLLocationCoordinate2D(latitude: lat, longitude: long)
+    func mapViewMoveTo(location: CLLocationCoordinate2D) {
         let span = MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
         let region = MKCoordinateRegion(center: location, span: span)
         mapView.showsCompass = false
@@ -104,13 +161,28 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         let dictionary = NSDictionary(contentsOfFile: Bundle.main.path(forResource: name, ofType: "plist")!);
         return dictionary?["places"] as! NSArray
     }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let locValue: CLLocationCoordinate2D = manager.location?.coordinate else { return }
+        for name in DataManager.sharedInstance.favoritesList {
+            let location = DataManager.sharedInstance.getLocation(name: name)
+            let distance = MKMapPoint(locValue).distance(to: MKMapPoint(location))
+            // Because it's hard to use location trigger here. Because location trigger only works at region edge
+            if distance < 2000 { // send notifcation when less than 2km
+                registerNotification(name: name)
+            }
+        }
+        print("locations = \(locValue.latitude) \(locValue.longitude)")
+    }
+    
 }
+
 
 extension MapViewController: PlacesFavoritesDelegate {
   
     func favoritePlace(name: String) {
-        let postion = DataManager.sharedInstance.getLocation(name: name)
-        mapViewMoveTo(lat: postion["lat"]!, long: postion["long"]!)
+        let position = DataManager.sharedInstance.getLocation(name: name)
+        mapViewMoveTo(location: position)
         for annotation in mapView.annotations {
             if annotation.title == name {
                 self.mapView.selectAnnotation(annotation, animated: true)
@@ -118,5 +190,6 @@ extension MapViewController: PlacesFavoritesDelegate {
             }
         }
     }
+    
 }
 
